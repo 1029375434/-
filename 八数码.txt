@@ -1,0 +1,330 @@
+
+#include<iostream>
+#include<string>
+#include<string.h>
+#include<queue>
+#include<set>
+#include<algorithm>
+using namespace std;
+struct node{
+	int x,y;
+	int step;//步数
+	char pre;//前一步操作U`D`L`R  ps:上一步操作是U，那么下一步操作不能是D，因为会产生死循环..
+	char map[5][5]; //九宫地图
+	char path[10000];//记录路径
+};//可理解为当前状态地图信息-结构体
+char begin[5][5],over[5][5];//开始地图和结束地图 已知.
+int x1,y1;//记录空格坐标
+void swap(int *a,int *b)
+{
+	int *t;
+	*t=*a;
+	*a=*b;
+	*b=*t;
+}
+bool check(node a)
+{
+	int i,j;
+	for(i=0;i<3;i++)
+		for(j=0;j<3;j++)
+		{
+			if(a.map[i][j]!=over[i][j])
+				return false;
+		}
+	return true;
+}
+set<string> hsh;
+bool getvis(node a)
+{
+	string tmp="";
+	int i,j;
+	for(i=0;i<3;i++)
+		for(j=0;j<3;j++)
+		{
+			tmp+=a.map[i][j];
+		}
+	if(hsh.find(tmp)!=hsh.end())//如果找到有相同的排序，那么不可进入字符串数组hsh 隐含地把用更多步数而得到相同排序的情况排除！
+		return false;
+ 
+	hsh.insert(tmp);
+	return true;
+}
+void pfMapPath(node tmp)
+{
+	int i,j,k;
+	cout<<"初始状态"<<endl;
+	for(i=0;i<3;i++)
+	{
+		for(j=0;j<3;j++)
+		{
+			if(begin[i][j]=='0')
+			{
+				tmp.map[i][j]=' ';
+				cout<<"  ";
+			}
+			else
+			{
+				tmp.map[i][j]=begin[i][j];
+				cout<<begin[i][j]<<" ";
+			}
+		}
+		cout<<endl;
+	}
+	cout<<endl;
+	
+	for(i=1;i<=tmp.step;i++)
+	{
+		if(tmp.path[i]=='U')
+		{
+			cout<<"前一状态走向:U"<<" 第"<<i<<"个状态:"<<endl;
+			swap(tmp.map[x1][y1],tmp.map[x1-1][y1]);
+			x1--;
+			for(j=0;j<3;j++)
+			{
+				for(k=0;k<3;k++)
+				{
+					if(tmp.map[j][k]=='0')
+					{
+						cout<<"  ";
+					}
+					else
+					{
+						cout<<tmp.map[j][k]<<" ";
+					}
+				}
+				cout<<endl;
+			}
+		}
+		else if(tmp.path[i]=='D')
+		{
+			cout<<"前一状态走向:D"<<" 第"<<i<<"个状态:"<<endl;
+			swap(tmp.map[x1][y1],tmp.map[x1+1][y1]);
+			x1++;
+			for(j=0;j<3;j++)
+			{
+				for(k=0;k<3;k++)
+				{
+					if(tmp.map[j][k]=='0')
+					{
+						cout<<"  ";
+					}
+					else
+					{
+						cout<<tmp.map[j][k]<<" ";
+					}
+				}
+				cout<<endl;
+			}
+		}
+		else if(tmp.path[i]=='R')
+		{
+			cout<<"前一状态走向:R"<<" 第"<<i<<"个状态:"<<endl;
+			swap(tmp.map[x1][y1],tmp.map[x1][y1+1]);
+			y1++;
+			for(j=0;j<3;j++)
+			{
+				for(k=0;k<3;k++)
+				{
+					if(tmp.map[j][k]=='0')
+					{
+						cout<<"  ";
+					}
+					else
+					{
+						cout<<tmp.map[j][k]<<" ";
+					}
+				}
+				cout<<endl;
+			}
+		}
+		else if(tmp.path[i]=='L')
+		{
+			cout<<"前一状态走向:L"<<" 第"<<i<<"个状态:"<<endl;
+			swap(tmp.map[x1][y1],tmp.map[x1][y1-1]);
+			y1--;
+			for(j=0;j<3;j++)
+			{
+				for(k=0;k<3;k++)
+				{
+					if(tmp.map[j][k]=='0')
+					{
+						cout<<"  ";
+					}
+					else
+					{
+						cout<<tmp.map[j][k]<<" ";
+					}
+				}
+				cout<<endl;
+			}
+		}
+	}
+	cout<<"终止状态:"<<endl;
+	for(i=0;i<3;i++)
+	{
+		for(j=0;j<3;j++)
+		{
+			if(over[i][j]=='0')
+			{
+				cout<<"  ";
+			}
+			else
+			{
+				cout<<over[i][j]<<" ";
+			}
+		}
+		cout<<endl;
+	}
+}
+bool bfs(int x,int y)
+{
+	node start;
+	start.x=x;
+	start.y=y;
+	start.step=0;
+	start.pre='X';
+	int i,j;
+	for(i=0;i<3;i++)
+		for(j=0;j<3;j++)
+			start.map[i][j]=begin[i][j];
+	queue<node> q;
+	q.push(start);
+	while(!q.empty())
+	{
+		node tmp=q.front(),tmp1;
+		q.pop();
+		if(check(tmp))
+		{
+			cout<<tmp.step<<endl;
+			return true;
+		}
+		tmp1=tmp;
+		if(tmp1.pre!='U'&&tmp1.x+1<3)
+		{
+			tmp1.path[tmp1.step]=tmp1.pre;
+			tmp1.pre='D';
+			tmp1.step++;
+			swap(tmp1.map[tmp1.x][tmp1.y],tmp1.map[tmp1.x+1][tmp1.y]);
+			tmp1.x++;
+			if(getvis(tmp1))
+			{
+				if(check(tmp1))
+				{
+					tmp1.path[tmp1.step]=tmp1.pre;
+					pfMapPath(tmp1);
+					//	cout<<tmp1.step<<endl;
+					return true;
+				}
+				else
+				{
+					q.push(tmp1);
+				}
+			}
+		}
+		tmp1=tmp;
+		if(tmp1.pre!='D'&&tmp1.x-1>=0)
+		{
+			tmp1.path[tmp1.step]=tmp1.pre;
+			tmp1.pre='U';
+			tmp1.step++;
+			swap(tmp1.map[tmp1.x][tmp1.y],tmp1.map[tmp1.x-1][tmp1.y]);
+			tmp1.x--;
+			if(getvis(tmp1))
+			{
+				if(check(tmp1))
+				{
+					tmp1.path[tmp1.step]=tmp1.pre;
+					pfMapPath(tmp1);
+					//	cout<<tmp1.step<<endl;
+					return true;
+				}
+				else
+				{
+					q.push(tmp1);
+				}
+			}
+		}
+		tmp1=tmp;
+		if(tmp1.pre!='L'&&tmp1.y+1<3)
+		{
+			tmp1.path[tmp1.step]=tmp1.pre;
+			tmp1.pre='R';
+			tmp1.step++;
+			swap(tmp1.map[tmp1.x][tmp1.y],tmp1.map[tmp1.x][tmp1.y+1]);
+			tmp1.y++;
+			if(getvis(tmp1))
+			{
+				if(check(tmp1))
+				{
+					tmp1.path[tmp1.step]=tmp1.pre;
+					pfMapPath(tmp1);
+					//	cout<<tmp1.step<<endl;
+					return true;
+				}
+				else
+				{
+					q.push(tmp1);
+				}
+			}
+		}
+		tmp1=tmp;
+		if(tmp1.pre!='R'&&tmp1.y-1>=0)
+		{
+			tmp1.path[tmp1.step]=tmp1.pre;
+			tmp1.pre='L';
+			tmp1.step++;
+			swap(tmp1.map[tmp1.x][tmp1.y],tmp1.map[tmp1.x][tmp1.y-1]);
+			tmp1.y--;
+			if(getvis(tmp1))
+			{
+				if(check(tmp1))
+				{
+					tmp1.path[tmp1.step]=tmp1.pre;
+					pfMapPath(tmp1);
+					//	cout<<tmp1.step<<endl;
+					return true;
+				}
+				else
+				{
+					q.push(tmp1);
+				}
+			}
+		}
+	}
+	return false;
+}
+int main()
+{
+	char str[100];
+	cin>>str;
+	int x,y;//记录空格坐标
+	int i,j;
+	for(i=0;i<3;i++){
+		for(j=0;j<3;j++)
+		{
+			if(str[i*3+j]=='.')
+			{
+				x=i;
+				y=j;
+				x1=x;
+				y1=y;
+				begin[i][j]='0';
+			}
+			else
+				begin[i][j]=str[i*3+j];
+		}
+	}
+	cin>>str;
+	for(i=0;i<3;i++){
+		for(j=0;j<3;j++)
+		{
+			if(str[i*3+j]=='.')
+				over[i][j]='0';
+			else
+				over[i][j]=str[i*3+j];
+		}
+	}
+	if(!bfs(x,y))
+		cout<<"-1"<<endl;
+	return 0;
+}
